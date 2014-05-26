@@ -13,7 +13,14 @@ var util = require('util');
 process.stdin.on('data', function (text) {
 //	console.log('received data:', util.inspect(text));
 	var moves = util.inspect(text).slice(1, -3).split(" ");
-		
+	
+	if (text === 'reset\n') {
+		console.log("You have reset the game!");
+		console.log("Starting over...");
+		runGame();
+		return;
+	}
+	
 	runGame(moves);
 	
 	if (text === 'quit\n') {
@@ -29,6 +36,7 @@ function done() {
 var players = [];
 var comp = 0;
 var human = 1;
+var width = process.stdout.columns;
 
 var Player = function (player) {
 	this.player = player;
@@ -38,6 +46,14 @@ var Player = function (player) {
 	this.computer = false;
 	this.finished = false;
 };
+
+function generateHR (character) {
+	var rule = "";
+	for (var y = 0; y < width; y++) {
+		rule += character;
+	}
+	console.log(rule);
+}
 
 function rollDice (sides, rolls) {
 	var currentRolls = [];
@@ -52,6 +68,18 @@ function runGame(moves) {
 		for (var i = 2; i < process.argv.length; i++) {
 			players.push(new Player(process.argv[i]));
 		}
+		
+		
+		
+		generateHR("/");
+		console.log("// Welcome to Bilge Dice!");
+		console.log("// Bilge Dice is a game from Neopets");
+		console.log("// Each player can keep 6 dice");
+		console.log("// You must keep one 1 and one 4 as qualifiers");
+		console.log("// You can keep any amount of dice per round but at least one");
+		console.log("// The highest score wins");
+		console.log("// A perfect score is 24, bonus if you get it!");
+		generateHR("/");
 	}
 	
 	for (var q = 0; q < players.length; q++) {
@@ -60,6 +88,10 @@ function runGame(moves) {
 		if (moves && player.adjustHand(moves) === true) {
 			player.round++;
 		}
+		if (q === 0) {
+			generateHR("~");
+		}
+		
 		
 		player.checkComputer();
 		player.getRound();
@@ -68,8 +100,12 @@ function runGame(moves) {
 		player.getDiceChoices();
 		console.log("---");
 	}
+	
+	console.log(" ");
+	console.log(" ");
 
 	if (players[comp].finished === true && players[human].finished === true) {
+		generateHR("/");
 		console.log("GAME OVER!");
 		
 		if (players[human].total > players[comp].total) {
@@ -77,14 +113,17 @@ function runGame(moves) {
 		} else if (players[human].total === players[comp].total) {
 			console.log("Nice tie.");
 		} else {
-			console.log("whrrrrrhrrrr...");
+			console.log("Computer wins. whrrrrrhrrrr...");
 		}
+		generateHR("/");
 	} else if (players[human].finished === true || players[comp].finished === true) {
-		console.log("press enter to continue...");
+		console.log("> press enter to continue...");
 	} else {
-		console.log("Player " + players[human].player + ", please choose your dice!");
+		console.log("> Player " + players[human].player + ", please choose your dice!");
 		if (players[human].round === 1) {
-			console.log("The command is > " + players[human].player + " keep #,#");
+			console.log("> The command is > keep #,#");
+			console.log("> Remember, you need 1 and 4 & want the highest score possible.");
+			console.log(" ");
 		}
 	}
 };
@@ -96,15 +135,23 @@ Player.prototype.checkComputer = function () {
 };
 
 Player.prototype.getName = function () {
-	console.log("PLAYER " + this.player.toUpperCase());
-	console.log("$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$");
+	var message = "PLAYER " + this.player.toUpperCase();
+	var border = "";
+	console.log(message);
+
+	for (var n = 0; n<message.length; n++) {
+		border += "=";
+	}
+	
+	console.log(border);
 };
+
 
 Player.prototype.adjustHand = function (moves) {
 	var self = this;
-	if (this.player === moves[0]) {
-		if (moves[1] === "keep") {
-			var adjMoves = moves[2];
+	 if (this.player === players[human].player) {
+		if (moves[0] === "keep") {
+			var adjMoves = moves[1];
 			var movesArray = adjMoves.match(",") ? adjMoves.split(",") : adjMoves;
 			for (var k = 0; k < movesArray.length; k++) {
 				self.hand.push(movesArray[k]);			
@@ -117,9 +164,9 @@ Player.prototype.adjustHand = function (moves) {
 
 Player.prototype.returnHand = function () {
 	if (this.computer) {
-		console.log("The computer has selected " + (this.hand.length + 1) + " cards.");
+		console.log("The computer has selected " + (this.hand.length + 1) + " dice.");
 	} else {
-		console.log("My hand: " + (this.hand.length === 0 ? "blank" : this.hand));	
+		console.log("Your hand: " + (this.hand.length === 0 ? "empty" : this.hand));	
 	}
 };
 
@@ -152,6 +199,7 @@ Player.prototype.getComputerChoices = function (choices) {
 	//console.log("Computer hand: " + this.hand);
 	
 	if (this.hand.length === 6) {
+		console.log("Computer's hand: " + this.hand);
 		this.playerResults();
 	}
 };
@@ -167,7 +215,7 @@ Player.prototype.getDiceChoices = function () {
 			this.getComputerChoices(rollDice(6, 6 - length));
 			return;
 		}
-		console.log("My choices: " + rollDice(6, 6 - length));
+		console.log("Your choices: " + rollDice(6, 6 - length));
 	}
 };
 
@@ -199,7 +247,8 @@ Player.prototype.autowin = function () {
 };
 
 Player.prototype.getRound = function () {
-	console.log("Welcome to round " + this.round + " of Bilge Dice!");
+	console.log(" ");
+	console.log("Round " + this.round);
 };
 
 runGame();
