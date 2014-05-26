@@ -28,13 +28,33 @@ var Player = function (player) {
 };
 
 function rollDice (sides, rolls) {
-	return Math.floor(Math.random() * sides + 1);
+	var currentRolls = [];
+	for (var j = 0; j < rolls; j++) {
+		currentRolls.push(Math.floor(Math.random() * sides + 1));
+	}
+	return currentRolls;
 };
 
-function runGame(players) {
-	for (var i = 0; i < players.length; i++) {
-		console.log(players[i]);
-		var player = new Player(players[i]);
+function runGame() {
+	for (var i = 2; i < process.argv.length; i++) {
+		console.log("PLAYER " + process.argv[i]);
+		var player = new Player(process.argv[i]);
+		
+		player.returnHand();
+		player.getDiceChoices();
+		console.log("---")
+	}
+};
+
+Player.prototype.returnHand = function () {
+	console.log("My hand: " + (this.hand.length === 0 ? "blank" : this.hand));
+};
+
+Player.prototype.getDiceChoices = function () {
+	var length = this.hand.length;
+	
+	if (length < 6) {
+		console.log("My choices: " + rollDice(6, 6 - length));
 	}
 };
 
@@ -43,8 +63,7 @@ function round(num) {
 	num++;
 };
 
-console.log(rollDice(6, 6));
 
-round(0);
+round(1);
 
-runGame()
+runGame();
