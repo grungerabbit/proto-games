@@ -10,12 +10,22 @@ process.stdin.resume();
 process.stdin.setEncoding('utf8');
 var util = require('util');
 
+var numberMoves = 0;
+
 process.stdin.on('data', function (text) {
 	console.log('received data:', util.inspect(text));
 	
-	console.log(text + "!!!!!");
+	var moves = util.inspect(text).slice(1, -3).split(" ");
 	
+	console.log(moves);
 	
+	console.log(numberMoves);
+	numberMoves++;
+	
+//	console.log(text.split(" ") + "!!!!!");
+	
+
+	runGame(moves);
 	
 	if (text === 'quit\n') {
 		done();
@@ -30,6 +40,7 @@ function done() {
 var Player = function (player) {
 	this.player = player;
 	this.hand = [];
+	this.round = 1;
 };
 
 function rollDice (sides, rolls) {
@@ -40,16 +51,49 @@ function rollDice (sides, rolls) {
 	return currentRolls;
 };
 
-function runGame() {
-	for (var i = 2; i < process.argv.length; i++) {
-		console.log("PLAYER " + process.argv[i]);
-		var player = new Player(process.argv[i]);
+var players = [];
+
+function runGame(moves) {
+	if (!moves) {
+		for (var i = 2; i < process.argv.length; i++) {
+			players.push(new Player(process.argv[i]));
+		}
+	}
+	
+	
+	for (var q = 0; q < players.length; q++) {
+		var player = players[q];
 		
+		if (moves && player.adjustHand(moves) === true) {
+			player.round++;
+		}
+		
+		player.getRound();
+		player.getName();
 		player.returnHand();
 		player.getDiceChoices();
-		console.log("---")
+		console.log("---");
 	}
 };
+
+Player.prototype.getName = function () {
+	console.log("PLAYER " + this.player.toUpperCase());
+}
+
+Player.prototype.adjustHand = function (moves) {
+	var self = this;
+	if (this.player === moves[0]) {
+		if (moves[1] === "keep") {
+			var adjMoves = moves[2];
+			var movesArray = adjMoves.match(",") ? adjMoves.split(",") : adjMoves;
+			for (var k = 0; k < movesArray.length; k++) {
+				self.hand.push(movesArray[k]);			
+			}
+			return true;
+		}
+	}
+};
+
 
 Player.prototype.returnHand = function () {
 	console.log("My hand: " + (this.hand.length === 0 ? "blank" : this.hand));
@@ -63,13 +107,9 @@ Player.prototype.getDiceChoices = function () {
 	}
 };
 
-function round(num) {
-	console.log("Welcome to round " + num + " of Bilge Dice!");
+Player.prototype.getRound = function () {
+	console.log("Welcome to round " + this.round + " of Bilge Dice!");
 	console.log("$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$");
-	num++;
 };
-
-
-round(1);
 
 runGame();
