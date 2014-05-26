@@ -12,6 +12,11 @@ var util = require('util');
 
 process.stdin.on('data', function (text) {
 	console.log('received data:', util.inspect(text));
+	
+	console.log(text + "!!!!!");
+	
+	
+	
 	if (text === 'quit\n') {
 		done();
 	}
@@ -60,6 +65,7 @@ Player.prototype.getDiceChoices = function () {
 
 function round(num) {
 	console.log("Welcome to round " + num + " of Bilge Dice!");
+	console.log("$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$~*$");
 	num++;
 };
 
