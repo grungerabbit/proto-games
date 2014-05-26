@@ -10,21 +10,11 @@ process.stdin.resume();
 process.stdin.setEncoding('utf8');
 var util = require('util');
 
-var numberMoves = 0;
 
 process.stdin.on('data', function (text) {
-	console.log('received data:', util.inspect(text));
-	
+//	console.log('received data:', util.inspect(text));
 	var moves = util.inspect(text).slice(1, -3).split(" ");
-	
-	console.log(moves);
-	
-	console.log(numberMoves);
-	numberMoves++;
-	
-//	console.log(text.split(" ") + "!!!!!");
-	
-
+		
 	runGame(moves);
 	
 	if (text === 'quit\n') {
@@ -37,10 +27,14 @@ function done() {
 	process.exit();
 }
 
+var players = [];
+
 var Player = function (player) {
 	this.player = player;
 	this.hand = [];
 	this.round = 1;
+	this.total = 0;
+	this.computer = false;
 };
 
 function rollDice (sides, rolls) {
@@ -51,8 +45,6 @@ function rollDice (sides, rolls) {
 	return currentRolls;
 };
 
-var players = [];
-
 function runGame(moves) {
 	if (!moves) {
 		for (var i = 2; i < process.argv.length; i++) {
@@ -60,13 +52,14 @@ function runGame(moves) {
 		}
 	}
 	
-	
 	for (var q = 0; q < players.length; q++) {
 		var player = players[q];
 		
 		if (moves && player.adjustHand(moves) === true) {
 			player.round++;
 		}
+		
+		player.checkComputer();
 		
 		player.getRound();
 		player.getName();
@@ -76,9 +69,17 @@ function runGame(moves) {
 	}
 };
 
+Player.prototype.checkComputer = function () {
+	if (this.player === "computer") {
+		console.log("I AM A COMPUTER");
+		console.log("RUN COMPUTER THINGS INSTEAD");
+		this.computer = true;
+	}	
+};
+
 Player.prototype.getName = function () {
 	console.log("PLAYER " + this.player.toUpperCase());
-}
+};
 
 Player.prototype.adjustHand = function (moves) {
 	var self = this;
@@ -96,15 +97,52 @@ Player.prototype.adjustHand = function (moves) {
 
 
 Player.prototype.returnHand = function () {
-	console.log("My hand: " + (this.hand.length === 0 ? "blank" : this.hand));
+	if (this.computer) {
+		console.log("The computer has selected " + this.hand.length + " cards.");
+	} else {
+		console.log("My hand: " + (this.hand.length === 0 ? "blank" : this.hand));	
+	}
+};
+
+Player.prototype.checkValid = function () {
+	return (this.hand.indexOf("1") !== -1 && this.hand.indexOf("4") !== -1) ? true : false;
+};
+
+Player.prototype.getComputerChoices = function (choices) {
+	this.round++;
+	console.log("Sorry Dave, I'm afraid I can't do that.")
+	console.log("secret computer input: " + choices);
 };
 
 Player.prototype.getDiceChoices = function () {
+	
 	var length = this.hand.length;
 	
-	if (length < 6) {
+	if (length === 6) {
+		this.playerResults();
+		return;
+	} else {
+		if (this.computer) {
+			this.getComputerChoices(rollDice(6, 6 - length));
+			return;
+		}
 		console.log("My choices: " + rollDice(6, 6 - length));
 	}
+};
+
+Player.prototype.playerResults = function () {
+	if (this.checkValid() === true) {
+		for (var w = 0; w < 6; w++) {
+			this.total += parseInt(this.hand[w]);
+		}
+		this.total -= 5; //adjustment for qualifiers
+		console.log("Player " + this.player + " final score: " + this.total);
+		if (this.total === 24) {
+			console.log("Perfect score!");
+		}
+	} else {
+		console.log("Player " + this.player + " failed to qualify!");
+	}	
 };
 
 Player.prototype.getRound = function () {
